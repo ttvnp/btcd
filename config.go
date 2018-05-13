@@ -26,6 +26,7 @@ import (
 	"github.com/btcsuite/btcd/connmgr"
 	"github.com/btcsuite/btcd/database"
 	_ "github.com/btcsuite/btcd/database/ffldb"
+	_ "github.com/btcsuite/btcd/database/mysqlldb"
 	"github.com/btcsuite/btcd/mempool"
 	"github.com/btcsuite/btcutil"
 	"github.com/btcsuite/go-socks/socks"
@@ -133,6 +134,8 @@ type config struct {
 	AddCheckpoints       []string      `long:"addcheckpoint" description:"Add a custom checkpoint.  Format: '<height>:<hash>'"`
 	DisableCheckpoints   bool          `long:"nocheckpoints" description:"Disable built-in checkpoints.  Don't do this unless you know what you're doing."`
 	DbType               string        `long:"dbtype" description:"Database backend to use for the Block Chain"`
+	DbRWConnectionString string        `long:"dbrwconnection" description:"Database connection string for read write transactions"`
+	DbROConnectionString string        `long:"dbroconnection" description:"Database connection string for read only transactions"`
 	Profile              string        `long:"profile" description:"Enable HTTP profiling on given port -- NOTE port must be between 1024 and 65536"`
 	CPUProfile           string        `long:"cpuprofile" description:"Write CPU profile to the specified file"`
 	DebugLevel           string        `short:"d" long:"debuglevel" description:"Logging level for all subsystems {trace, debug, info, warn, error, critical} -- You may also specify <subsystem>=<level>,<subsystem2>=<level>,... to set the log level for individual subsystems -- Use show to list available subsystems"`
