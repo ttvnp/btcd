@@ -16,7 +16,7 @@ const (
 func init() {
 	// Register the driver.
 	parseArgs := func(funcName string, args ...interface{}) (string, *mysql.Config, *mysql.Config, wire.BitcoinNet, error) {
-		if len(args) != 3 || len(args) != 4 {
+		if len(args) != 3 && len(args) != 4 {
 			return "", nil, nil, 0, fmt.Errorf(
 				"invalid arguments to %s.%s -- expected database path, block network and database connection settings",
 				dbType,

@@ -286,6 +286,10 @@ func (tx *tx) writePendingAndCommit() error {
 			return err
 		}
 	}
+	// commit block store
+	if err := tx.db.store.commit(); err != nil {
+		return err
+	}
 
 	// commit metadata.
 	return tx.db.cache.commitTx(tx)
@@ -312,6 +316,9 @@ func (tx *tx) close() {
 		tx.snapshot.Release()
 		tx.snapshot = nil
 	}
+
+	// close block store db
+	tx.db.store.close()
 
 	// unlock mutex
 	tx.db.closeLock.RUnlock()

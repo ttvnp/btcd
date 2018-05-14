@@ -50,6 +50,28 @@ func newBlockStore(
 	return store
 }
 
+func (s *blockStore) tryConnect() error {
+	config := s.readWriteConfig
+	session1 := mysql.NewSession(config)
+	defer session1.Close()
+	_, err := session1.SelectBySql("SELECT 1").ReturnInt64()
+	if err != nil {
+		return makeError(database.ErrDriverSpecific, "could not connect to database.", err)
+	}
+	log.Debugf("%s connection succeeded", config.FormatDSN())
+
+	config = s.readOnlyConfig
+	session2 := mysql.NewSession(config)
+	defer session2.Close()
+	_, err = session2.SelectBySql("SELECT 1").ReturnInt64()
+	if err != nil {
+		return makeError(database.ErrDriverSpecific, "could not connect to database.", err)
+	}
+	log.Debugf("%s connection succeeded", config.FormatDSN())
+
+	return nil
+}
+
 func (s *blockStore) readBlock(hash *chainhash.Hash, loc blockLocation) (*btcutil.Block, error) {
 	entity, err := s.readBlockByteByLocation(loc)
 	if err != nil {
@@ -192,7 +214,9 @@ func (s *blockStore) writeBlock(block *btcutil.Block) (blockLocation, error) {
 		}
 	}
 
-	return blockLocation{}, nil
+	return blockLocation{
+		blockID: blockEntity.ID,
+	}, nil
 }
 
 func (s *blockStore) networkParams() *chaincfg.Params {
@@ -211,7 +235,6 @@ func (s *blockStore) networkParams() *chaincfg.Params {
 }
 
 func (s *blockStore) begin(writable bool) error {
-
 	var config *mysql.Config
 	if writable {
 		config = s.readWriteConfig
@@ -236,11 +259,20 @@ func (s *blockStore) syncBlocks() error {
 	return nil
 }
 
+func (s *blockStore) commit() error {
+	err := s.currentTx.Commit()
+	if err != nil {
+		return makeError(database.ErrDriverSpecific, "mysql error on commit transaction.", err)
+	}
+	return nil
+}
+
 func (s *blockStore) handleRollback() {
 	s.currentTx.Rollback()
 }
 
 func (s *blockStore) close() error {
+	s.currentTx.RollbackUnlessCommitted()
 	err := s.currentSession.Close()
 	if err != nil {
 		return makeError(database.ErrDriverSpecific, "mysql error on session close.", err)

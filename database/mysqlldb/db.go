@@ -195,6 +195,9 @@ func openDB(
 
 	// Create the block store.
 	store := newBlockStore(network, readWriteConfig, readOnlyConfig)
+	if err := store.tryConnect(); err != nil {
+		return nil, err
+	}
 	cache := newDbCache(ldb, store, defaultCacheSize, defaultFlushSecs)
 	pdb := &db{store: store, cache: cache}
 
